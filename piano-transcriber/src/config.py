@@ -7,14 +7,34 @@ Holds global configuration variables, such as:
     - Training hyperparameters (batch size, learning rate, etc.).
 """
 
-SAMPLE_RATE = ...
-HOP_LENGTH = ...
-BINS_PER_OCTAVE = ...
-N_PITCHES = ...
+# --------------- |
+# AUDIO PARAMETER |
+# --------------- |
 
-DATASET_DIR = ...
-PROCESSED_DIR = ...
+SAMPLE_RATE = 16000
+HOP_LENGTH = 512
+BINS_PER_OCTAVE = 36
+N_PITCHES = 229
+FMIN = 27.5
 
-BATCH_SIZE = ...
-LEARNING_RATE = ...
-EPOCHS = ...
+# ----------- |
+# LABEL SPACE |
+# ----------- |
+
+N_PITCHES = 88
+
+# ------------------- |
+# DATASET DIRECTORIES |
+# ------------------- |
+
+RAW_DATASET_DIR = "data/maestro"
+FEATURES_DIR = "data/processed/features"
+LABELS_DIR = "data/processed/labels"
+
+# -------------------------------------- |
+# TRAINING PARAMETERS (example defaults) |
+# -------------------------------------- |
+
+BATCH_SIZE = 8
+LEARNING_RATE = 1e-3
+EPOCHS = 50
