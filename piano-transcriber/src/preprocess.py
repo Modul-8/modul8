@@ -7,6 +7,9 @@ Saves results as compressed arrays for efficient loading during training.
 
 import argparse
 import numpy as np
+import librosa
+
+import config
 
 
 def audio_to_cqt(path: str) -> np.ndarray:
@@ -20,7 +23,17 @@ def audio_to_cqt(path: str) -> np.ndarray:
         np.ndarray: 2D array (freq_bins x time_frames) of log-CQT values.
     """
 
-    return None
+    y, _ = librosa.load(path, sr=config.SAMPLE_RATE, mono=True)
+    C = np.abs(librosa.cqt(
+        y,
+        sr=config.SAMPLE_RATE,
+        hop_length=config.HOP_LENGTH,
+        bins_per_octave=config.BINS_PER_OCTAVE,
+        n_bins=config.N_BINS,
+        fmin=config.FMIN
+        ))
+    C_db = librosa.amplitude_to_db(C, ref=np.max)
+    return C_db.astype(np.float32)
 
 
 def midi_to_frame_labels(midi_path: str, n_frames: int) -> np.ndarray:
@@ -65,6 +78,6 @@ def main(dataset_dir: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_dir", type=str, default="data/maestro", help="Path to dataset root containing audio/ and midi/")
+    parser.add_argument("--dataset_dir", type=str, default=config.RAW_DATASET_DIR, help="Path to dataset root containing audio/ and midi/")
     args = parser.parse_args()
     main(args.dataset_dir)
