@@ -9,6 +9,7 @@ import argparse
 import numpy as np
 import librosa
 import pretty_midi
+import os
 
 import config
 
@@ -87,7 +88,27 @@ def process_file(audio_path: str, midi_path: str, out_id: str):
         output_id (str): Unique identifier for saving output files.
     """
 
-    return None
+
+    # Extract features
+    C = audio_to_cqt(audio_path)
+    n_frames = C.shape[1]
+
+    # Extract labels
+    onset, frame, offset, velocity = midi_to_frame_labels(midi_path, n_frames)
+
+    # Save features
+    os.makedirs(config.FEATURES_DIR, exist_ok=True)
+    np.savez_compressed(os.path.join(config.FEATURES_DIR, f"{out_id}.npz"), cqt=C)
+
+    # Save labels
+    os.makedirs(config.FEATURES_DIR, exist_ok=True)
+    np.savez_compressed(
+            os.path.join(config.LABELS_DIR, f"{out_id}.npz"),
+            onset=onset,
+            frame=frame,
+            offset=offset,
+            velocity=velocity
+    )
 
 
 def main(dataset_dir: str):
