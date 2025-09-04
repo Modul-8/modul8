@@ -8,6 +8,7 @@ Saves results as compressed arrays for efficient loading during training.
 import argparse
 import numpy as np
 import librosa
+import pretty_midi
 
 import config
 
@@ -36,7 +37,7 @@ def audio_to_cqt(path: str) -> np.ndarray:
     return C_db.astype(np.float32)
 
 
-def midi_to_frame_labels(midi_path: str, n_frames: int) -> np.ndarray:
+def midi_to_frame_labels(midi_path: str, n_frames: int) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Convert MIDI to onset/frame/offset/velocity labels.
 
@@ -49,7 +50,31 @@ def midi_to_frame_labels(midi_path: str, n_frames: int) -> np.ndarray:
             onset, frame, offset, velocity arrays (time_frames x pitches)
     """
 
-    return None
+    pm = pretty_midi.PrettyMIDI(midi_path)
+
+    onset = np.zeros((n_frames, config.N_PITCHES), dtype=np.float32)
+    frame = np.zeros((n_frames, config.N_PITCHES), dtype=np.float32)
+    offset = np.zeros((n_frames, config.N_PITHES), dtype=np.float32)
+    velocity = np.zeros((n_frames, config.N_PITHES), dtype=np.float32)
+
+    for note in pm.instruments[0].notes:
+        if note.pitch < 21 or note.pitch > 108:
+            continue
+        pitch_idx = note.pitch - 21
+
+        start_frame = int(note.start * config.SAMPLE_RATE / config.HOP_LENGTH)
+        end_frame = int(note.end * config.SAMPLE_RATE / config.HOP_LENGTH)
+
+        if start_frame >= n_frames:
+            continue
+        end_frame = min(end_frame, n_frames - 1)
+
+        onset[start_frame, pitch_idx] = 1.0
+        offset[end_frame, pitch_idx] = 1.0
+        frame[start_frame:end_frame + 1, pitch_idx] = 1.0
+        velocity[start_frame:end_frame + 1, pitch_idx] = note.velocity / 127.0
+
+    return onset, frame, offset, velocity
 
 
 def process_file(audio_path: str, midi_path: str, out_id: str):
