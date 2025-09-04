@@ -14,7 +14,7 @@ Holds global configuration variables, such as:
 SAMPLE_RATE = 16000
 HOP_LENGTH = 512
 BINS_PER_OCTAVE = 36
-N_PITCHES = 229
+N_BINS = 229
 FMIN = 27.5
 
 # ----------- |
