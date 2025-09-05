@@ -10,6 +10,8 @@ import numpy as np
 import librosa
 import pretty_midi
 import os
+import glob
+from tqdm import tqdm
 
 import config
 
@@ -55,8 +57,8 @@ def midi_to_frame_labels(midi_path: str, n_frames: int) -> tuple[np.ndarray, np.
 
     onset = np.zeros((n_frames, config.N_PITCHES), dtype=np.float32)
     frame = np.zeros((n_frames, config.N_PITCHES), dtype=np.float32)
-    offset = np.zeros((n_frames, config.N_PITHES), dtype=np.float32)
-    velocity = np.zeros((n_frames, config.N_PITHES), dtype=np.float32)
+    offset = np.zeros((n_frames, config.N_PITCHES), dtype=np.float32)
+    velocity = np.zeros((n_frames, config.N_PITCHES), dtype=np.float32)
 
     for note in pm.instruments[0].notes:
         if note.pitch < 21 or note.pitch > 108:
@@ -88,7 +90,6 @@ def process_file(audio_path: str, midi_path: str, out_id: str):
         output_id (str): Unique identifier for saving output files.
     """
 
-
     # Extract features
     C = audio_to_cqt(audio_path)
     n_frames = C.shape[1]
@@ -116,10 +117,23 @@ def main(dataset_dir: str):
     Process entire dataset directory of audio/MIDI pairs.
 
     Args:
-        dataset_dir (str): Path to dataset root containing audio/ and midi/ subfolders.
+        dataset_dir (str): Path to dataset root containing audio/ and midi/
+        subfolders.
     """
 
-    return None
+    audio_files = sorted(glob.glob(os.path.join(dataset_dir, "audio", "*.wav")) +
+                         glob.glob(os.path.join(dataset_dir, "audio", "*.flac")))
+
+    for audio_path in tqdm(audio_files, desc="Processing files"):
+        file_id = os.path.splitext(os.path.basename(audio_path))[0]
+        midi_path = os.path.join(dataset_dir, "midi", f"{file_id}.midi")
+        if not os.path.exists(midi_path):
+            midi_path = os.path.join(dataset_dir, "midi", f"{file_id}.mid")
+        if not os.path.exists(midi_path):
+            print(f"ERROR: Skipping {file_id} (no matching MIDI found)")
+            continue
+
+        process_file(audio_path, midi_path, file_id)
 
 
 if __name__ == "__main__":
